@@ -1,1 +1,0 @@
-webpackJsonp([0],[function(t,a,i){i(1),t.exports=i(2)},function(t,a,i){"use strict";$(function(){var t=$("#svg");$(".nav-sidebar a").click(function(a){a.preventDefault(),a.stopPropagation();var i=$(this).attr("href");t.attr("src",i),$(".nav-sidebar li").removeClass("active"),$(this).parent("li").addClass("active")})})},function(t,a){}],[0]);
