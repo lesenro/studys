@@ -7,7 +7,7 @@ const routers = [
                 key: "default",
                 url: "js/default.js"
             }, {
-                name: "一个笑脸",
+                name: "七巧板",
                 key: "l1-1",
                 url: "js/l1-1.js"
             }
