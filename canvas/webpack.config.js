@@ -75,6 +75,9 @@ const common = {
         new CopyWebpackPlugin([{
             from: "./public/js",
             to: path.resolve(__dirname, 'dist/js')
+        },{
+            from: "./public/img",
+            to: path.resolve(__dirname, 'dist/img')
         }]),
         new HtmlWebpackPlugin({ template: "./public/index.html" }),
 

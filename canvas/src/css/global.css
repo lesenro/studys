@@ -127,5 +127,14 @@ body {
 
   #canvas{
     border: #eee 1px solid;
-    margin: 50px auto;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    z-index: 100;
+  }
+
+  #canvas-container{
+    min-width: 800px;
+    min-height: 600px;
   }

@@ -13,12 +13,12 @@ const routers = [
             }
         ]
     }, {
-        name: "SVG动画",
+        name: "游戏动画",
         menus: [
-            {
-                name: "动画原理",
-                key: "l7-1",
-                url: "js/l7-1.js"
+             {
+                name: "小鱼游戏",
+                key: "l2-1",
+                url: "js/l2-1.js"
             }
         ]
     }
@@ -82,11 +82,16 @@ $(function () {
 });
 
 function loadJs(url){
-    $.getScript(url).then(js=>{
+    var js=$.getScript(url).then(js=>{
     });
 }
 window.getContext=function(){
     var canvas=document.getElementById("canvas");
+    canvas.remove();
+    var container = document.getElementById("canvas-container");
+    canvas = document.createElement("canvas");
+    canvas.id="canvas";
+    container.appendChild(canvas);
     canvas.width=800;
     canvas.height=600;
     var ctx= canvas.getContext("2d");
