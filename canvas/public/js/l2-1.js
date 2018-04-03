@@ -19,7 +19,11 @@ function App() {
         ctxbg.clearRect(0,0,canvas.width,canvas.height);
         drawBackground();
         anectrl.drawAll();
-        fruitctrl.eatTest(mom.fx,mom.fy);
+        var fruitobj= fruitctrl.eatTest(mom.fx,mom.fy);
+        if(fruitobj){
+            mom.eatfruit(fruitobj);
+        }
+        
         fruitctrl.drawAll(stime);
         
         mom.angle=Math.atan2(
@@ -37,6 +41,10 @@ function App() {
         baby.fx=Tools.lerpDistance(mom.fx,baby.fx,0.98);
         baby.fy=Tools.lerpDistance(mom.fy,baby.fy,0.98);
         baby.draw(stime);
+        if(Tools.callLen(mom.fx,mom.fy,baby.fx,baby.fy)<900){
+            baby.restore();
+            mom.restore();
+        }
     };
     
     function drawBackground() {
@@ -76,6 +84,7 @@ function App() {
             baby.init(30);
             mx=0;
             my=0;
+
             gameLoop();
         }
     }
@@ -169,8 +178,8 @@ function fruitClass(ctx,anes){
             w =0 ;
             r=8;
             speed=Math.random()*0.02+0.01;
-            this.type= Math.random()*4;
-            if(this.type>2){
+            this.type= Math.random()*5>3;
+            if(this.type){
                 c1="#00f";
                 c2="rgba(0,0,255,0.2)"
             }else{
@@ -207,28 +216,41 @@ function fruitClass(ctx,anes){
     }
     function eatTest(mom_x,mom_y){
         var fs=fruits.filter(x=>x.live);
+        var fruit=null;
         fs.forEach(obj => {
             var l= Tools.callLen(obj.x,obj.y,mom_x,mom_y);
             if(l<900){
                 obj.live=false;
                 obj.ane.selected=false;
+                fruit=obj;
             }
         });
+        return fruit;
     }
     return {
         init,drawAll,eatTest
     }
 }
-//大鱼
+//画鱼
 function fishObject(ctx){
     var eye,body,tail,scolor,fcolor,size;
     this.fx=0;
     this.fy=0;
     this.angle=0;
+    var bodySteps={
+        count:20,
+        alpha:0,
+        light:0,
+        hue:0
+    };
+    var fruitdata={
+        blue:0,
+        orange:0
+    };
     function eyeObject(){
         this.x=-size/4;
         var timer=0;
-        var splite=280;
+        var splite=1800;
         this.draw=(stime)=>{
             timer+=stime;
             ctx.beginPath();
@@ -236,12 +258,13 @@ function fishObject(ctx){
                 ctx.arc(this.x,0,size/10,0,2*Math.PI);
             }else{
                 ctx.rect(this.x-size/10,-size/20,size/10,3);
-                if(timer>splite*2){
+                if(timer>splite*1.2){
                     timer=0;
+                    splite=Math.random()*800+800;
                 }
             }
             ctx.closePath()
-            ctx.fillStyle=scolor;
+            ctx.fillStyle="#fff";
             ctx.fill();
         };
     }
@@ -252,13 +275,55 @@ function fishObject(ctx){
         this.d=0.35;
         var timer=0;
         var anm = 0;
+        var splite=400;
+
         this.draw=(stime)=>{
             ctx.beginPath();
             ctx.moveTo(-size*(1-this.d),0);
             ctx.lineTo(0,-size/2);
             ctx.arc(0,-this.y,this.r,1.5*Math.PI,this.d*Math.PI);
             ctx.arc(0,this.y,this.r,(2-0.35)*Math.PI,0.5*Math.PI);
-            ctx.strokeStyle=scolor;
+            timer+=stime;
+            //小鱼
+            if(size<50){
+                if(timer>splite){
+                    timer=0;
+                    bodySteps.count--;
+                    fcolor[2] += bodySteps.light;
+                    fcolor[3] -=  bodySteps.alpha;
+                }
+                var my_gradient=ctx.createRadialGradient(this.x-size/5,0,0,this.x-size/5,0,size/1.5);
+                var fc=`hsla(${fcolor[0]},${fcolor[1]}%,${fcolor[2]}%,${fcolor[3]})`
+                my_gradient.addColorStop(1,fc);
+                my_gradient.addColorStop(0,scolor);
+                ctx.fillStyle=my_gradient;
+                ctx.fill();
+            }
+            //大鱼
+            else{
+                if(fruitdata.blue>0){
+                    scolor="#00f";
+                    fcolor[0]=210;
+                    fcolor[2] = bodySteps.light*fruitdata.blue;
+                    fcolor[3] =  bodySteps.alpha*fruitdata.blue;
+                }else if(fruitdata.orange>0){
+                    scolor="#f80";
+                    fcolor[0]=30;
+                    fcolor[2] = bodySteps.light*fruitdata.orange;
+                    fcolor[3] =  bodySteps.alpha*fruitdata.orange;
+                }
+                fcolor[3]=fcolor[3]>1?1:fcolor[3];
+                fcolor[2]=fcolor[2]>50?50:fcolor[2];
+                if(fruitdata.blue+fruitdata.orange>0){
+                    var my_gradient=ctx.createRadialGradient(this.x-size/5,0,0,this.x-size/5,0,size/1.5);
+                    var fc=`hsla(${fcolor[0]},${fcolor[1]}%,${fcolor[2]}%,${fcolor[3]})`
+                    my_gradient.addColorStop(0,scolor);
+                    my_gradient.addColorStop(1,fc);
+                    ctx.fillStyle=my_gradient;
+                    ctx.fill();
+                }
+            }
+            ctx.strokeStyle="#fff";
             ctx.closePath()
             ctx.stroke();
         };
@@ -276,7 +341,7 @@ function fishObject(ctx){
                 anm=(anm+1)%8;
                 timer=timer%splite;
             }
-            ctx.strokeStyle=scolor;
+            ctx.strokeStyle="#fff";
             ctx.beginPath();
             ctx.arc(this.x+this.r,this.y,this.r,1.75*Math.PI,0.25*Math.PI);
             ctx.stroke();
@@ -285,7 +350,7 @@ function fishObject(ctx){
             
             ctx.arc(this.x+this.r*(anm*0.03+1.6),this.y,this.r,1.65*Math.PI,0.35*Math.PI);
             ctx.closePath();
-            ctx.fillStyle=scolor;
+            ctx.fillStyle="#fff";
             ctx.fill();
             //ctx.fill();
         };
@@ -293,7 +358,12 @@ function fishObject(ctx){
     this.init=function(s=50){
         size=s;
         scolor="white";
-        fcolor="rgba(0,0,0,0)";
+        fcolor=[0,100,50,1];
+        bodySteps.count=size<50?20:10;
+
+        bodySteps.light=fcolor[2]/bodySteps.count;
+        bodySteps.alpha=1/bodySteps.count;
+
         this.fx=ctx.canvas.width/2;
         this.fy=ctx.canvas.height/2;
         eye=new eyeObject();
@@ -306,11 +376,25 @@ function fishObject(ctx){
             this.fx+size/4,
             this.fy);
         ctx.rotate(this.angle);
-        eye.draw(stime);
         body.draw(stime);
+        eye.draw(stime);
         tail.draw(stime);
         ctx.restore();
     };
+    this.restore=function(){
+        bodySteps.count=20; 
+        fcolor[2]=50;
+        fcolor[3]=1;
+        fruitdata.orange=0;
+        fruitdata.blue=0;
+    }
+    this.eatfruit=function(fruit){
+        if(fruit.type){
+            fruitdata.blue++;
+        }else{
+            fruitdata.orange++;
+        }
+    }
 }
 
 var myapp = new App();
