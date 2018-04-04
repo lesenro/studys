@@ -8,10 +8,6 @@ gradient.addColorStop("0","blue");
 gradient.addColorStop("1.0","red");
 // 用渐变填色
 ctx.strokeStyle=gradient;
-
-
-setTimeout(function(){
-    var txt="开始学习Canvas";
+var txt="开始学习Canvas";
     var w=ctx.measureText(txt).width;
     ctx.strokeText(txt,(canvas.width-w)/2,90);
-},2000);

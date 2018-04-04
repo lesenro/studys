@@ -7,9 +7,20 @@ function App() {
         ctxbg,
         anectrl,
         fruitctrl,
-        lastTime,mom,mx,my,baby;
+        lastTime,mom,mx,my,baby,score,dust,links=[{
+            name:"HTML5小游戏---爱心鱼（上）",
+            link:"https://www.imooc.com/learn/515",
+        },{
+            name:"HTML5小游戏---爱心鱼（下）",
+            link:"https://www.imooc.com/learn/516"
+        }],linkhtml;
 
     function gameLoop() {
+        if(location.hash!="#l2-1"){
+            canvasbg.remove();
+            linkhtml.remove();
+            return;
+        }
         window.requestAnimationFrame(gameLoop);
         var now=Date.now();
         var stime=now-lastTime;
@@ -17,14 +28,8 @@ function App() {
 
         ctx.clearRect(0,0,canvas.width,canvas.height);
         ctxbg.clearRect(0,0,canvas.width,canvas.height);
-        drawBackground();
-        anectrl.drawAll();
-        var fruitobj= fruitctrl.eatTest(mom.fx,mom.fy);
-        if(fruitobj){
-            mom.eatfruit(fruitobj);
-        }
+
         
-        fruitctrl.drawAll(stime);
         
         mom.angle=Math.atan2(
             my-mom.fy,
@@ -32,7 +37,6 @@ function App() {
         )+Math.PI;
         mom.fx=Tools.lerpDistance(mx,mom.fx,0.98);
         mom.fy=Tools.lerpDistance(my,mom.fy,0.98);
-        mom.draw(stime);
 
         baby.angle=Math.atan2(
             mom.fy-baby.fy,
@@ -40,11 +44,34 @@ function App() {
         )+Math.PI;
         baby.fx=Tools.lerpDistance(mom.fx,baby.fx,0.98);
         baby.fy=Tools.lerpDistance(mom.fy,baby.fy,0.98);
-        baby.draw(stime);
-        if(Tools.callLen(mom.fx,mom.fy,baby.fx,baby.fy)<900){
-            baby.restore();
-            mom.restore();
+
+
+        var bdata= baby.getBodySteps();
+        drawBackground();
+        if(bdata.count<=0){
+            score.drawover(stime);
+        }else{
+            var fruitobj= fruitctrl.eatTest(mom.fx,mom.fy);
+            if(fruitobj){
+                mom.eatfruit(fruitobj);
+                mom.wavesAppend();
+            }
+            if(Tools.callLen(mom.fx,mom.fy,baby.fx,baby.fy)<900){
+                var fd= mom.getfruitdata();
+                if(score.update(fd)){
+                    baby.wavesAppend();
+                    baby.restore();
+                    mom.restore();
+                }
+            }
+            mom.draw(stime);
+            baby.draw(stime);
         }
+        score.draw();
+        fruitctrl.drawAll(stime);
+        anectrl.drawAll(stime);
+        dust.drawAll(stime);
+    
     };
     
     function drawBackground() {
@@ -57,13 +84,32 @@ function App() {
         my=ev.offsetY;
     }
 
-    
+    function gameStart(ev){
+        var bdata= baby.getBodySteps();
+        if(bdata.count>0){
+            return;
+        }
+        if(!score.overClick(ev)){
+            return;
+        }
+        mom.init(50);
+        baby.init(30);
+    }
+    function addLinks(){
+        $(container).after(
+            links.map(x=>{
+                return `<div class='fishlnks'><a href='${x.link}' target='_blank'>${x.name}</a></div>`
+            })
+        );
+        linkhtml=$(".fishlnks");
+    };
     return {
         init: () => {
             var result = window.getContext();
             ctx = result.ctx;
             canvas = result.canvas;
             $(canvas).on("mousemove",mouseMove);
+            $(canvas).on("click",gameStart);
             // 初始化背景
             container = document.getElementById("canvas-container");
             canvasbg = document.createElement("canvas");
@@ -79,12 +125,16 @@ function App() {
             fruitctrl.init();
             lastTime=Date.now();
             mom=new fishObject(ctx);
-            mom.init(50);
             baby=new fishObject(ctx);
+            mom.init(50);
             baby.init(30);
             mx=0;
             my=0;
-
+            score=new scoreData(ctx);
+            score.init();
+            dust=new dustClass(ctx);
+            dust.init();
+            addLinks();
             gameLoop();
         }
     }
@@ -97,7 +147,10 @@ var Tools={
         lerpDistance:(a,c,r)=>{
             var de =c-a;
             return a+de*r;
-        }
+        },
+        isCollision(x1, y1, x2, y2, w, h) {  
+            return x1 >= x2 && x1 <= x2 + w && y1 >= y2 && y1 <= y2 + h;  
+        }  
 };
 //海藻
 function aneClass(ctx, bw, bh) {
@@ -106,16 +159,28 @@ function aneClass(ctx, bw, bh) {
     function aneObj(i = 0) {
         var x = bw / aneCount * i + Math.random() * 20;
         var ch = bh;
-        var h = Math.random() * 25 + 150;
+        var h = Math.random() * 25 + 180;
         var w = Math.random() * 10 + 15;
-        function draw() {
+        var amp=Math.random() * 50 + 50;
+        var topx=x;
+        var alpha=0;
+        var tx=0;
+        function draw(stime) {
+            alpha+=stime*0.001;
+            var l=Math.sin(alpha);
+            tx=topx+l*amp;
             ctx.beginPath();
             ctx.moveTo(x, ch);
-            ctx.lineTo(x, ch - h);
+
+            ctx.quadraticCurveTo(x,ch-100,tx,ch-h);
+            //ctx.lineTo(x, ch - h);
             ctx.lineWidth = w;
             ctx.stroke();
         }
-        return {draw: draw,x,h,w};
+        function getTx(){
+            return tx;
+        }
+        return {draw: draw,x,h,w,getTx:getTx};
     }
     return {
         anes: anes,
@@ -125,7 +190,7 @@ function aneClass(ctx, bw, bh) {
                 anes.push(o);
             }
         },
-        drawAll: () => {
+        drawAll: (stime) => {
 
             ctx.save();
             ctx.globalAlpha = 0.6;
@@ -133,7 +198,7 @@ function aneClass(ctx, bw, bh) {
             ctx.lineCap = "round";
 
             anes.forEach(o => {
-                o.draw();
+                o.draw(stime);
             });
             ctx.restore();
         }
@@ -153,7 +218,7 @@ function fruitClass(ctx,anes){
                 return;
             }
             if(w<r){
-                w=w+speed*stime;
+                w=w+speed*stime*0.2;
                 w=w<r?w:r;
             }else{
                 this.y=this.y-speed*stime;
@@ -163,6 +228,7 @@ function fruitClass(ctx,anes){
                 this.live=false;
             }
             ctx.beginPath();
+            this.x=this.ane.getTx();
             ctx.arc(this.x,this.y,w,0,2*Math.PI);
             var my_gradient=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,w);
             my_gradient.addColorStop(0,c1);
@@ -233,7 +299,7 @@ function fruitClass(ctx,anes){
 }
 //画鱼
 function fishObject(ctx){
-    var eye,body,tail,scolor,fcolor,size;
+    var eye,body,tail,wavelist,scolor,fcolor,size;
     this.fx=0;
     this.fy=0;
     this.angle=0;
@@ -355,6 +421,32 @@ function fishObject(ctx){
             //ctx.fill();
         };
     }
+    function waveObject(){
+        var waves=[],max=100;
+        this.append=function(x,y){
+            waves.push({
+                x:x,
+                y:y,
+                r:0
+            });
+        };
+        this.draw=function(stime){
+            
+            ctx.save();
+            waves.forEach(item => {
+                ctx.beginPath();
+                var alpha=(100-item.r)/100;
+                
+                ctx.strokeStyle=size<50?`rgba(255,200,0,${alpha})`:`rgba(255,255,255,${alpha})`;
+                item.r+=stime*0.07;
+                ctx.arc(item.x,item.y,item.r,0,2*Math.PI);
+                ctx.closePath();
+                ctx.stroke();
+            });
+            ctx.restore();
+            waves=waves.filter(x=>x.r<max);
+        };
+    }
     this.init=function(s=50){
         size=s;
         scolor="white";
@@ -369,8 +461,20 @@ function fishObject(ctx){
         eye=new eyeObject();
         body=new bodyObject();
         tail=new tailObject();
+        wavelist=new waveObject();
     };
     this.draw=function(stime){
+        ctx.fillStyle="white";
+        ctx.font="14px Verdana";
+        ctx.textAlign="left";
+        if(size>=50){
+            ctx.fillText("blue(10): " +fruitdata.blue, 20,50);        
+            ctx.fillText("orange(5): " +fruitdata.orange, 20,70);    
+        }else{
+            ctx.fillText("life: " +bodySteps.count, 20,90);    
+        }
+        wavelist.draw(stime);
+        //画吃的东西
         ctx.save();
         ctx.translate(
             this.fx+size/4,
@@ -381,6 +485,12 @@ function fishObject(ctx){
         tail.draw(stime);
         ctx.restore();
     };
+    this.getfruitdata=function(){
+        return fruitdata;
+    };
+    this.getBodySteps=function(){
+        return bodySteps;
+    };
     this.restore=function(){
         bodySteps.count=20; 
         fcolor[2]=50;
@@ -388,6 +498,9 @@ function fishObject(ctx){
         fruitdata.orange=0;
         fruitdata.blue=0;
     }
+    this.wavesAppend=function(){
+        wavelist.append(this.fx,this.fy);
+    };
     this.eatfruit=function(fruit){
         if(fruit.type){
             fruitdata.blue++;
@@ -396,6 +509,81 @@ function fishObject(ctx){
         }
     }
 }
+//记录
+function scoreData(ctx){
+    this.score=0;
+    
+    this.init=function(){
+        this.score=0;
+    };
+    var canvas=ctx.canvas,alpha=0;
+    this.update=function(data){
+        this.score+=data.blue*10+data.orange*5;
+        if(data.blue+data.orange>0){
+            return true;
+        }else{
+            return false;
+        }
+    };
+    this.draw=function(){
+        ctx.fillStyle="white";
+        ctx.font="20px Verdana";
+        ctx.textAlign="center";
+        ctx.fillText("score: " + this.score,canvas.width*0.5,50);
+    };
+    this.drawover=function(stime){
+        alpha+=stime*0.0005;
+        if(alpha>1){
+            alpha=1;
+        }
+        ctx.save();
+        ctx.shadowBlur=10;
+        ctx.shadowColor="#ff0";
+        ctx.fillStyle=`rgba(255,255,255,${alpha})`;
+        ctx.font="30px Verdana";
+        ctx.textAlign="center";
+        ctx.fillText("game over ",canvas.width*0.5,canvas.height*0.5);
+        ctx.restore();
+    };
+    this.overClick=function(ev){
+        var left=canvas.width*0.5-100;
+        var top=canvas.height*0.5-15;
+        return Tools.isCollision(ev.offsetX,ev.offsetY,left,top,200,30);
+    };
+}
+function dustClass(ctx){
+    var dusts=[],max=30;
+    var cw=ctx.canvas.width;
+    var ch=ctx.canvas.height;
+    var alpha=0;
+    this.init=function(){
+        for(var i=0;i<max;i++){
+            dusts.push({
+                x:Math.random()*cw,
+                y:Math.random()*ch,
+                r:Math.random()*4+3,
+                a:Math.random()*0.4+0.1,
+                amp:Math.random() * 50 + 50
+            });
+        }
+    };
+    this.drawAll=function(stime){
+        alpha+=stime*0.001;
+        var l=Math.sin(alpha);
+        dusts.forEach(item=>{
+            ctx.save();
+            ctx.beginPath();
+            var tx=item.x+l*item.amp;
 
+            ctx.arc(tx,item.y,item.r,0,2*Math.PI);
+            var my_gradient=ctx.createRadialGradient(tx,item.y,0,tx,item.y,item.r);
+            my_gradient.addColorStop(0,`rgba(255,255,255,${item.a})`);
+            my_gradient.addColorStop(1,`rgba(255,255,255,0)`);
+            ctx.fillStyle=my_gradient;
+            ctx.fill();
+            ctx.restore();
+        });
+    };
+}
 var myapp = new App();
 myapp.init();
