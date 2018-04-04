@@ -94,6 +94,7 @@ function App() {
         }
         mom.init(50);
         baby.init(30);
+        score.init();
     }
     function addLinks(){
         $(container).after(
