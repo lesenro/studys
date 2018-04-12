@@ -13,7 +13,6 @@ import HeaderSearch from '../components/HeaderSearch';
 import NoticeIcon from '../components/NoticeIcon';
 import GlobalFooter from '../components/GlobalFooter';
 import NotFound from '../routes/Exception/404';
-import PasswordChange from '../routes/Admin/PasswordChange';
 import styles from './BasicLayout.less';
 
 const { Header, Sider, Content } = Layout;
@@ -98,9 +97,9 @@ class BasicLayout extends React.PureComponent {
         okText: '确认',
         cancelText: '取消',
         onOk:()=> {
-          this.props.dispatch({
-            type: 'login/logout',
-          });
+          // this.props.dispatch({
+          //   type: 'login/logout',
+          // });
         },
         onCancel() {
           //console.log('Cancel');
@@ -401,22 +400,6 @@ class BasicLayout extends React.PureComponent {
                   </span>
                 </Dropdown>
               ) : <Spin size="small" style={{ marginLeft: 8 }} />}
-              {this.state.pwdChangeShow&&
-                <PasswordChange modalVisible={true} onSubmit={(ev)=>{
-                  this.setState({pwdChangeShow:false});
-                  if(ev.type==="success"){
-                    this.props.dispatch({
-                      type: 'users/updatePassword',
-                      payload:ev.data,
-                      callback:(result)=>{
-                        if(result.code==="success"){
-                          message.success("密码修改成功");
-                        }
-                      }
-                    });
-                  }
-                }}/>
-              }
             </div>
           </Header>
           <Content style={{ margin: '88px 24px 0 '+(collapsed?"104px":"280px"), height: '100%' }}>
