@@ -10,6 +10,10 @@ const routers = [
                 name: "七巧板",
                 key: "l1-1",
                 url: "js/l1-1.js"
+            }, {
+                name: "画星星",
+                key: "l1-2",
+                url: "js/l1-2.js"
             }
         ]
     }, {
@@ -21,26 +25,39 @@ const routers = [
                 url: "js/l2-1.js"
             }
         ]
+    },{
+        name:"three.js",
+        menus:[
+            {
+                name:"开始",
+                key:"l3-1",
+                url:"js/l3-1.js",
+                html:"tmpl/l3-1.html",
+            }
+        ]
+    },{
+        name:"create.js",
+        menus:[
+            {
+                name:"开始",
+                key:"l4-1",
+                url:"js/l4-1.js",
+                //html:"tmpl/l3-1.html",
+            }
+        ]
     }
 ];
 $(function () {
     $("#fullscreen").hide();
-
     //初始化左边菜单
     sidebarInit();
     //点击菜单
     $(".nav-sidebar a").click(function (ev) {
         ev.preventDefault();
         ev.stopPropagation();
-
+        $("canvas").remove();
         var key = $(this).attr("data-key");
-        var url = $(this).attr("data-url");
-        location.hash = "#"+key;
-        loadJs(url);
-        $(".nav-sidebar li").removeClass("active");
-        $(this)
-            .parent("li")
-            .addClass("active");
+        loadPage(key);
     });
     //预览全屏
     $("#btn-fullscreen").click(function (ev) {
@@ -56,40 +73,53 @@ $(function () {
     $("#sidebar ul.nav:eq(0) li:eq(0)").addClass("active");
 
     if (lochash) {
-        var item = null;
-        routers.forEach(m => {
-            var tmp = m
-                .menus
-                .find(x => "#"+x.key === lochash);
-            if (tmp) {
-                item = tmp;
-                return false;
-            }
-        });
-        if (item) {
-            loadJs(item.url);
-            $(".nav-sidebar li").removeClass("active");
-            $("#mm_" + item.key)
-                .parent("li")
-                .addClass("active");
-        } else {
-
-            loadJs("js/default.js");
-        }
+        loadPage(lochash.replace("#",""));
     } else {
-        location.hash = "default";
+        loadPage("default")
     }
 });
+function loadPage(key){
+    var htmlCnt=$("#html-container").hide();
+    var canvasCnt=$("#canvas-container");
+    var allmenus= [].concat(...routers.map(x=>x.menus));
 
+    htmlCnt.hide();
+    canvasCnt.hide();
+
+    location.hash = "#"+key;
+
+    $(".nav-sidebar li").removeClass("active");
+    $("#mm_"+key).parent("li").addClass("active")
+    var m=allmenus.find(x=>x.key==key);
+    if(!m){
+        return;
+    }
+    if(m.loads){
+        m.loads.forEach(x=>{
+            if(x.type=="js"){
+                loadJs(x.url);                
+            }
+        });
+    }
+    if(m.html){
+        htmlCnt.show();
+        $.get(m.html).then(res=>{
+            htmlCnt.html(res);
+        });
+        loadJs(m.url);
+    }else{
+        canvasCnt.show();
+        loadJs(m.url);
+    }
+}
 function loadJs(url){
     var js=$.getScript(url).then(js=>{
     });
 }
 window.getContext=function(){
-    var canvas=document.getElementById("canvas");
-    canvas.remove();
+    
     var container = document.getElementById("canvas-container");
-    canvas = document.createElement("canvas");
+    var canvas = document.createElement("canvas");
     canvas.id="canvas";
     container.appendChild(canvas);
     canvas.width=800;

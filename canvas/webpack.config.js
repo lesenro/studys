@@ -78,6 +78,9 @@ const common = {
         },{
             from: "./public/img",
             to: path.resolve(__dirname, 'dist/img')
+        },{
+            from: "./public/tmpl",
+            to: path.resolve(__dirname, 'dist/tmpl')
         }]),
         new HtmlWebpackPlugin({ template: "./public/index.html" }),
 

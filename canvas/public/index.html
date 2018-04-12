@@ -54,12 +54,14 @@
             <canvas class="canvas" id="canvas"></canvas>
             <button id="btn-fullscreen" class="btn btn-default"><i class="glyphicon glyphicon-fullscreen"></i></button>
           </div>
+          <div class="col-md-12 text-center" id="html-container">
+          </div>
         </div>
         <div>
-            <p>
-            项目开源地址: <a href="https://github.com/lesenro/studys.git" target="_blank" class="text-success">https://github.com/lesenro/studys.git</a>
-          </p>
-          </div>
+          <p>
+          项目开源地址: <a href="https://github.com/lesenro/studys.git" target="_blank" class="text-success">https://github.com/lesenro/studys.git</a>
+        </p>
+        </div>
       </div>
     </div>
   </div>
@@ -73,15 +75,24 @@
   <!-- Placed at the end of the document so the pages load faster -->
   <script src="https://cdn.bootcss.com/jquery/1.11.0-beta3/jquery.min.js"></script>
   <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://cdn.bootcss.com/lodash.js/4.17.5/lodash.min.js"></script>
+  <script src="https://cdn.bootcss.com/three.js/91/three.min.js"></script>  
+  <script src="https://cdn.bootcss.com/EaselJS/1.0.2/easeljs.min.js"></script>
+  <script src="https://cdn.bootcss.com/tweenjs/1.0.2/tweenjs.min.js"></script>
   <script src="./js/requestAnimation.js"></script>
   <script>
     var _hmt = _hmt || [];
-    (function() {
+    function baiduTj() {
       var hm = document.createElement("script");
       hm.src = "https://hm.baidu.com/hm.js?1d9af8011028cf354af97bc5bd86d4e6";
       var s = document.getElementsByTagName("script")[0]; 
       s.parentNode.insertBefore(hm, s);
-    })();
+    }
+    if(location.host.indexOf("ggcms.com")!==-1){
+      baiduTj();
+    }
+    
+  
     </script>
     
 </body>

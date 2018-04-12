@@ -97,6 +97,7 @@ function App() {
         score.init();
     }
     function addLinks(){
+        $(".fishlnks").remove();
         $(container).after(
             links.map(x=>{
                 return `<div class='fishlnks'><a href='${x.link}' target='_blank'>${x.name}</a></div>`

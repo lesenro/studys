@@ -1,0 +1,15 @@
+.text-right {
+    text-align: right;
+}
+
+.ant-tree-title {
+    vertical-align: middle;
+}
+
+.pull-right {
+    float: right;
+}
+
+.ant-checkbox-wrapper {
+    margin-left: 8px !important;
+}
